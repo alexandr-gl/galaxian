@@ -6,5 +6,9 @@ canvas {
 }
 
 #background {
-  position: relative;
+  z-index: -1;
+}
+
+#ship {
+  z-index: 0;
 }
