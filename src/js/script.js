@@ -40,7 +40,7 @@ $(function () {
     }
     this.get = function (x, y) {
       if(!this.pool[size - 1].alive) {
-        console.log('CHECK pool', this.pool)
+        //console.log('CHECK pool', this.pool)
         this.pool[size - 1].spawn(x, y);
         this.pool.unshift(this.pool.pop());
       }
@@ -110,22 +110,23 @@ $(function () {
   }
 
   function initEnemies() {
+    console.log('WE ARE HERE')
     this.poolEn = [];
     this.x = 0;
     this.y = 0;
-    for(let i; i < 18; i++) {
+    for(let i = 0; i < 18; i++) {
       console.log('INIT ENEMIES', this.x, this.y)
       var enemy = new Enemies(this.x, this.y)
-      this.poolEn[i].draw();
       this.x += 48;
-      if (i%6 === 0) {
+      if (i%6 === 0 && i !== 0) {
         this.x = 0;
         this.y += 38;
       }
       this.poolEn.push(enemy);
+      this.poolEn[i].draw();
     }
   }
-  
+
   function ship(x, y, width, height, img) {
     this.x = x;
     this.y = y;
@@ -140,6 +141,7 @@ $(function () {
   image.draw();
   ship.drawShip();
   pool.init();
+  initEnemies();
 
 
   function update () {
