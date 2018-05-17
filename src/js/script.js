@@ -1,5 +1,6 @@
 $(function () {
   var game = new Game();
+  var pool = new Pool(30);
   var imageStore = new function () {
     this.img = new Image();
     this.shipImg = new Image();
@@ -23,27 +24,70 @@ $(function () {
     this.shipCtx = this.shipCanvas.getContext('2d')
   }
 
+  function Pool(size) {
+    this.pool = [];
+    this.init = function () {
+      for (let i = 0; i < size; i++) {
+        var bullet = new Bullet();
+        this.pool[i] = bullet;
+      }
+      console.log('CHECK pool', this.pool)
+    }
+    this.get = function (x, y) {
+      if(!this.pool[size - 1].alive) {
+        this.pool[size - 1].spawn(x, y);
+        this.pool.unshift(this.pool.pop());
+      }
+    }
+    this.getTwo = function(x1, y1, x2, y2) {
+      if(!this.pool[size - 1].alive &&
+        !this.pool[size - 2].alive) {
+        this.get(x1, y1);
+        this.get(x2, y2);
+      }
+    };
+    this.animate = function() {
+      for(let i=0; i < size; i++) {
+        console.log('WE ARE IN ANIMATE', this.pool[i].alive, this.pool[i].draw())
+        if(this.pool[i].alive) {
+          if(this.pool[i].draw()) {
+            this.pool[i].draw();
+            this.pool[i].clear();
+            this.pool.push((this.pool.splice(i,1))[0])
+          }
+        }
+      }
+    }
+  }
+
   function background (x, y, img) {
-    // this.alive = false;
-    // function spawn(x, y,) {
-    //   this.x = x;
-    //   this.y = y;
-    //   this.alive = true;
-    // }
     this.x = x;
     this.y = y;
     this.draw = function () {
       game.bgCtx.drawImage(imageStore.img, x, y)
     }
   }
-  function bullet (x, y, width, height, img) {
+  function Bullet (x, y, width, height, img) {
+    this.alive = false;
+    this.spawn = function(x, y) {
+      console.log('WE ARE IN SPAWN')
+      this.x = x;
+      this.y = y;
+      this.alive = true;
+    };
     this.x = x;
     this.y = y;
     this.width = width;
     this.height = height;
     this.draw = function () {
-      game.bgCtx.drawImage(imageStore.bulletImg, x, y)
-      game.bgCtx.drawImage(imageStore.bulletImg, x+20, y)
+      game.shipCtx.drawImage(imageStore.bulletImg, x, y);
+      game.shipCtx.drawImage(imageStore.bulletImg, x+28, y);
+      return true;
+    }
+    this.clear = function () {
+      this.x = 0;
+      this.y = 0;
+      this.alive = false;
     }
   }
   function ship(x, y, width, height, img) {
@@ -58,7 +102,6 @@ $(function () {
   var image = new background(0, 0, 600, 360, imageStore.img);
   var ship = new ship(270, 320, 40, 26, imageStore.shipImg)
   var bul1 = null
-  var bul2 = null
   image.draw();
   ship.drawShip();
 
@@ -74,17 +117,16 @@ $(function () {
   }
 
   function updateBullet () {
-    game.shipCtx.clearRect(bul1.x, bul1.y, 2, 14)
-    game.shipCtx.clearRect(bul2.x, bul2.y, 2, 14)
-    bul1.y = bul1.y - 2;
-    bul2.y = bul2.y - 2;
-    game.shipCtx.drawImage(imageStore.bulletImg, bul1.x, bul1.y)
-    game.shipCtx.drawImage(imageStore.bulletImg, bul2.x, bul2.y)
+    game.shipCtx.clearRect(pool.pool[0].x, pool.pool[0].y, 2, 14)
+    game.shipCtx.clearRect(pool.pool[0].x + 28, pool.pool[0].y, 2, 14)
+    pool.pool[0].y -= 2;
+    game.shipCtx.drawImage(imageStore.bulletImg, pool.pool[0].x, pool.pool[0].y)
+    game.shipCtx.drawImage(imageStore.bulletImg, pool.pool[0].x + 28, pool.pool[0].y)
   }
 
   var timer = setInterval( function () {
     update();
-    if(bul1 !== null) {
+    if(pool.pool.length !== 0) {
       updateBullet()
     }
   }, 1000/60)
@@ -103,11 +145,12 @@ $(function () {
     }
     else if(eventObject.which === 32)
     {
-      bul1 = new bullet(ship.x + 5, ship.y - 6, imageStore.bulletImg)
-      bul2 = new bullet(ship.x + 33, ship.y - 6, imageStore.bulletImg)
-      bul1.draw();
-      bul2.draw();
-    }null
+      //bul1 = new bullet(ship.x + 5, ship.y - 6, imageStore.bulletImg)
+      //bul1.draw();
+      pool.init();
+      pool.getTwo(ship.x + 5, ship.y - 6, ship.x + 33, ship.y - 6);
+      pool.animate();
+    }
   })
 
 });
