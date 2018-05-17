@@ -5,10 +5,12 @@ $(function () {
     this.img = new Image();
     this.shipImg = new Image();
     this.bulletImg = new Image();
+    this.enemyImg = new Image();
 
     this.img.src = 'img/bg.png';
-    this.bulletImg.src = 'img/bullet.png'
+    this.bulletImg.src = 'img/bullet.png';
     this.shipImg.src = 'img/ship.png';
+    this.enemyImg.src = 'img/enemy.png';
   }
 
   function Game() {
@@ -98,6 +100,32 @@ $(function () {
       this.alive = false;
     }
   }
+
+  function Enemies (x, y) {
+    this.x = x;
+    this.y = y;
+    this.draw = function() {
+      game.mainCtx.drawImage(imageStore.enemyImg, this.x, this.y)
+    }
+  }
+
+  function initEnemies() {
+    this.poolEn = [];
+    this.x = 0;
+    this.y = 0;
+    for(let i; i < 18; i++) {
+      console.log('INIT ENEMIES', this.x, this.y)
+      var enemy = new Enemies(this.x, this.y)
+      this.poolEn[i].draw();
+      this.x += 48;
+      if (i%6 === 0) {
+        this.x = 0;
+        this.y += 38;
+      }
+      this.poolEn.push(enemy);
+    }
+  }
+  
   function ship(x, y, width, height, img) {
     this.x = x;
     this.y = y;
