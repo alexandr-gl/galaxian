@@ -1,6 +1,7 @@
 $(function () {
   var game = new Game();
   var pool = new Pool(30);
+  var enemies = new InitEnemies(134, 0);
   var imageStore = new function () {
     this.img = new Image();
     this.shipImg = new Image();
@@ -30,13 +31,22 @@ $(function () {
     this.mainCtx = this.main.getContext('2d')
   }
 
+
   function Pool(size) {
     this.pool = [];
-    this.init = function () {
-      for (let i = 0; i < size; i++) {
-        var bullet = new Bullet();
-        this.pool[i] = bullet;
+    this.init = function (type) {
+      if(type === 'bullets') {
+        for (let i = 0; i < 30; i++) {
+          var bullet = new Bullet();
+          this.pool[i] = bullet;
+        }
       }
+      // else if (type === 'enemies') {
+      //   for (let i = 0; i < 18; i++) {
+      //     var enemy = new Enemies();
+      //     this.pool[i] = enemy;
+      //   }
+      // }
     }
     this.get = function (x, y) {
       if(!this.pool[size - 1].alive) {
@@ -84,15 +94,21 @@ $(function () {
     this.width = width;
     this.height = 360;
     this.draw = function () {
-      game.mainCtx.clearRect(this.x, this.y, 2, 14)
+      game.shipCtx.clearRect(this.x, this.y, 2, 14)
+      console.log('CHECK ALIVE IN DRAW', this.alive)
       this.y -= 2
       if (this.y <= 0) {
         return true;
       }
       else {
-        //console.log('DRAW COOEDINATES', this.x, this.y)
-        game.mainCtx.drawImage(imageStore.bulletImg, this.x, this.y);
+        console.log('DRAW COOEDINATES', this.x, this.y)
+        game.shipCtx.drawImage(imageStore.bulletImg, this.x, this.y);
       }
+      // if (this.y === arr[arr.length - 1].y)
+      // {
+      //   arr[arr.length - 1].alive = false;
+      // }
+
     }
     this.clear = function () {
       this.x = 0;
@@ -101,30 +117,56 @@ $(function () {
     }
   }
 
-  function Enemies (x, y) {
+  function Enemies (x, y, index) {
+    this.index = index;
     this.x = x;
     this.y = y;
-    this.draw = function() {
-      game.mainCtx.drawImage(imageStore.enemyImg, this.x, this.y)
+    this.alive = true;
+    // this.spawn = function (x, y) {
+    //   this.x = x;
+    //   this.y = y;
+    //   this.alive = true;
+    // }
+    this.draw = function(alive) {
+      if(alive === true) {
+        game.mainCtx.drawImage(imageStore.enemyImg, this.x, this.y)
+      }
+      else {
+        game.mainCtx.clearRect(this.x, this.y, 38, 28)
+      }
     }
   }
 
-  function initEnemies() {
+  function InitEnemies(x, y) {
     console.log('WE ARE HERE')
     this.poolEn = [];
-    this.x = 0;
-    this.y = 0;
-    for(let i = 0; i < 18; i++) {
-      console.log('INIT ENEMIES', this.x, this.y)
-      var enemy = new Enemies(this.x, this.y)
-      this.x += 48;
-      if (i%6 === 0 && i !== 0) {
-        this.x = 0;
-        this.y += 38;
+    this.x = x;
+    this.y = y;
+    this.init = function () {
+      for (let i = 0; i < 18; i++) {
+        console.log('INIT ENEMIES', this.x, this.y)
+        var enemy = new Enemies(this.x, this.y, i)
+        this.x += 58;
+        if ((i + 1) % 6 === 0 && i !== 0) {
+          this.x = 136;
+          this.y += 38;
+        }
+        this.poolEn.push(enemy);
+        // this.poolEn[i].draw();
       }
-      this.poolEn.push(enemy);
-      this.poolEn[i].draw();
+      console.log('>>>>', this.poolEn)
     }
+    // this.animate = function() {
+    //   for(let i=0; i < size; i++) {
+    //     if(this.poolEn[i].alive) {
+    //       if(this.poolEn[i].draw()) {
+    //         this.poolEn[i].clear();
+    //         this.poolEn.push((this.pool.splice(i,1))[0])
+    //       }
+    //     }
+    //     else break;
+    //   }
+    // }
   }
 
   function ship(x, y, width, height, img) {
@@ -137,11 +179,11 @@ $(function () {
 
   var image = new background(0, 0, 600, 360, imageStore.img);
   var ship = new ship(270, 320, 40, 26, imageStore.shipImg)
-  var bul1 = null
-  image.draw();
-  ship.drawShip();
-  pool.init();
-  initEnemies();
+  var bul1 = null;
+  pool.init('bullets');
+  //pool.init('enemies');
+  enemies.init();
+  var arr;
 
 
   function update () {
@@ -153,13 +195,29 @@ $(function () {
       image.y = 0;
     }
   }
-
   var timer = setInterval( function () {
     update();
+    top:
     for(let i = 0; i < 30; i++)
     {
       if(pool.pool.length !== 0 && pool.pool[i].alive !== false && pool.pool[i].y > 0) {
-          pool.pool[i].draw();
+        arr = enemies.poolEn.filter(function (item) {
+          return pool.pool[i].x >= item.x && pool.pool[i].x <= item.x + 38 && item.y + 28 === pool.pool[i].y && item.alive !== false;
+        })
+        pool.pool[i].draw();
+        console.log('CHECK ARRAY AFTER FILTER', arr)
+        if(arr.length !== 0) {
+          arr[arr.length - 1].alive = false;
+          game.shipCtx.clearRect(pool.pool[i].x, pool.pool[i].y, 2, 14)
+          game.shipCtx.clearRect(pool.pool[i+1].x, pool.pool[i+1].y, 2, 14)
+          pool.pool[i].y = 0;
+          pool.pool[i+1].y = 0;
+          enemies.poolEn.splice(arr[arr.length - 1].index, 1, arr[arr.length - 1]);
+        }
+      }
+
+      if(i < 18 && enemies.poolEn.length !== 0) {
+        enemies.poolEn[i].draw(enemies.poolEn[i].alive);
       }
     }
   }, 1000/60)
