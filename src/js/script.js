@@ -1,17 +1,23 @@
 $(function () {
+  var date = new Date().getTime();
+  var date1 = date;
+  console.log(date)
   var game = new Game();
   var pool = new Pool(30);
+  var enemyBulPool = new Pool(2);
   var enemies = new InitEnemies(134, 0);
   var imageStore = new function () {
     this.img = new Image();
     this.shipImg = new Image();
     this.bulletImg = new Image();
     this.enemyImg = new Image();
+    this.enBulletImg = new Image();
 
     this.img.src = 'img/bg.png';
     this.bulletImg.src = 'img/bullet.png';
     this.shipImg.src = 'img/ship.png';
     this.enemyImg.src = 'img/enemy.png';
+    this.enBulletImg.src = 'img/bullet_enemy.png';
   }
 
   function Game() {
@@ -36,12 +42,19 @@ $(function () {
     this.pool = [];
     this.init = function (type) {
       if(type === 'bullets') {
-        for (let i = 0; i < 30; i++) {
-          var bullet = new Bullet();
+        for (let i = 0; i < size; i++) {
+          var bullet = new Bullet('bullets');
+          this.pool[i] = bullet;
+        }
+      }
+      else if(type === 'enBullets') {
+        for (let i = 0; i < size; i++) {
+          var bullet = new Bullet('enBullets');
           this.pool[i] = bullet;
         }
       }
     }
+    console.log('CHECK POOL>>>', this.pool)
     this.get = function (x, y) {
       if(!this.pool[size - 1].alive) {
         this.pool[size - 1].spawn(x, y);
@@ -55,10 +68,10 @@ $(function () {
         this.get(x2, y2);
       }
     };
-    this.animate = function() {
+    this.animate = function(type) {
       for(let i=0; i < size; i++) {
         if(this.pool[i].alive) {
-          if(this.pool[i].draw()) {
+          if(this.pool[i].draw(type)) {
             this.pool[i].clear();
             this.pool.push((this.pool.splice(i,1))[0])
           }
@@ -75,7 +88,8 @@ $(function () {
       game.bgCtx.drawImage(imageStore.img, x, y)
     }
   }
-  function Bullet (x, y, width) {
+
+  function Bullet (x, y) {
     this.alive = false;
     this.spawn = function(x, y) {
       this.x = x;
@@ -84,14 +98,32 @@ $(function () {
     };
     this.x = x;
     this.y = y;
-    this.draw = function () {
-      game.shipCtx.clearRect(this.x, this.y, 2, 14)
-      this.y -= 2
-      if (this.y <= 0) {
-        return true;
+    this.draw = function (type) {
+      if(type === 'ship') {
+        //console.log('WE ARE DRAWING ship BULLETS', this.x, this.y);
+        game.shipCtx.clearRect(this.x, this.y, 2, 14)
+        this.y -= 2;
+        if (this.y <= 0) {
+          return true;
+        }
+        else {
+          game.shipCtx.drawImage(imageStore.bulletImg, this.x, this.y);
+        }
       }
-      else {
-        game.shipCtx.drawImage(imageStore.bulletImg, this.x, this.y);
+      else if(type === 'enemyBullet') {
+        game.shipCtx.clearRect(this.x, this.y, 2, 14)
+        this.y += 2;
+        if (this.y >= 360) {
+          return true;
+        }
+        else if(this.y === ship.y  && this.x >= ship.x  && this.x <= ship.x + 40)
+        {
+          alert('You are died');
+          return true;
+        }
+        else {
+          game.shipCtx.drawImage(imageStore.enBulletImg, this.x, this.y);
+        }
       }
     }
     this.clear = function () {
@@ -130,6 +162,7 @@ $(function () {
         }
         this.poolEn.push(enemy);
       }
+      console.log('PoolEn', this.poolEn)
     }
   }
 
@@ -144,8 +177,11 @@ $(function () {
   var image = new background(0, 0, 600, 360, imageStore.img);
   var ship = new ship(270, 320, 40, 26, imageStore.shipImg)
   pool.init('bullets');
+  enemyBulPool.init('enBullets');
   enemies.init();
   var arr;
+  var randInd;
+  var enArr;
 
 
   function update () {
@@ -157,15 +193,30 @@ $(function () {
       image.y = 0;
     }
   }
+
+  function randomInteger(min, max) {
+    var rand = min + Math.random() * (max + 1 - min);
+    rand = Math.floor(rand);
+    return rand;
+  }
+
   var timer = setInterval( function () {
     update();
+    enArr = enemies.poolEn.filter(function (item) {
+      return item.alive === true && item.y === 76;
+    })
+    if(enArr.length !== 0 || enemyBulPool.pool[0].alive === true) {
+      randInd = randomInteger(0, enArr.length - 1);
+      enemyBulPool.getTwo(enemies.poolEn[enArr[randInd].index].x + 5, enemies.poolEn[enArr[randInd].index].y + 30, enemies.poolEn[enArr[randInd].index].x + 33, enemies.poolEn[enArr[randInd].index].y + 30);
+      enemyBulPool.animate('enemyBullet');
+    }
     for(let i = 0; i < 30; i++)
     {
       if(pool.pool.length !== 0 && pool.pool[i].alive !== false && pool.pool[i].y > 0) {
         arr = enemies.poolEn.filter(function (item) {
           return pool.pool[i].x >= item.x && pool.pool[i].x <= item.x + 38 && item.y + 28 === pool.pool[i].y && item.alive !== false;
         })
-        pool.pool[i].draw();
+        pool.pool[i].draw('ship');
         if(arr.length !== 0) {
           arr[arr.length - 1].alive = false;
           game.shipCtx.clearRect(pool.pool[i].x, pool.pool[i].y, 2, 14)
@@ -175,7 +226,6 @@ $(function () {
           enemies.poolEn.splice(arr[arr.length - 1].index, 1, arr[arr.length - 1]);
         }
       }
-
       if(i < 18 && enemies.poolEn.length !== 0) {
         enemies.poolEn[i].draw(enemies.poolEn[i].alive);
       }
