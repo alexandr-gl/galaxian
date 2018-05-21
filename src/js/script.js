@@ -114,6 +114,7 @@ $(function () {
         game.shipCtx.clearRect(this.x, this.y, 2, 14)
         this.y += 2;
         if (this.y >= 360) {
+          console.log('MORE THAN 360');
           return true;
         }
         else if(this.y === ship.y  && this.x >= ship.x  && this.x <= ship.x + 40)
@@ -182,6 +183,7 @@ $(function () {
   var arr;
   var randInd;
   var enArr;
+  var help;
 
 
   function update () {
@@ -205,10 +207,19 @@ $(function () {
     enArr = enemies.poolEn.filter(function (item) {
       return item.alive === true && item.y === 76;
     })
-    if(enArr.length !== 0 || enemyBulPool.pool[0].alive === true) {
+    if(enArr.length === 1) {
+      help = enArr[0];
+    }
+    if(enArr.length !== 0) {
       randInd = randomInteger(0, enArr.length - 1);
       enemyBulPool.getTwo(enemies.poolEn[enArr[randInd].index].x + 5, enemies.poolEn[enArr[randInd].index].y + 30, enemies.poolEn[enArr[randInd].index].x + 33, enemies.poolEn[enArr[randInd].index].y + 30);
       enemyBulPool.animate('enemyBullet');
+    }
+    else if(enemyBulPool.pool[0].y < 360 && enemyBulPool.pool[0].alive === true){
+      console.log('TRY TRY');
+      enemyBulPool.getTwo(enemies.poolEn[help.index].x + 5, enemies.poolEn[help.index].y + 30, enemies.poolEn[help.index].x + 33, enemies.poolEn[help.index].y + 30);
+      enemyBulPool.animate('enemyBullet');
+      console.log('TRY BULLETS', enemyBulPool.pool[0])
     }
     for(let i = 0; i < 30; i++)
     {
