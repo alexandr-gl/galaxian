@@ -1,7 +1,4 @@
 $(function () {
-  var date = new Date().getTime();
-  var date1 = date;
-  console.log(date)
   var game = new Game();
   var pool = new Pool(30);
   var enemyBulPool = new Pool(2);
@@ -100,7 +97,6 @@ $(function () {
     this.y = y;
     this.draw = function (type) {
       if(type === 'ship') {
-        //console.log('WE ARE DRAWING ship BULLETS', this.x, this.y);
         game.shipCtx.clearRect(this.x, this.y, 2, 14)
         this.y -= 2;
         if (this.y <= 0) {
@@ -114,13 +110,12 @@ $(function () {
         game.shipCtx.clearRect(this.x, this.y, 2, 14)
         this.y += 2;
         if (this.y >= 360) {
-          console.log('MORE THAN 360');
           return true;
         }
         else if(this.y === ship.y  && this.x >= ship.x  && this.x <= ship.x + 40)
         {
           alert('You are died');
-          return true;
+          window.location.reload();
         }
         else {
           game.shipCtx.drawImage(imageStore.enBulletImg, this.x, this.y);
@@ -163,7 +158,6 @@ $(function () {
         }
         this.poolEn.push(enemy);
       }
-      console.log('PoolEn', this.poolEn)
     }
   }
 
@@ -216,10 +210,8 @@ $(function () {
       enemyBulPool.animate('enemyBullet');
     }
     else if(enemyBulPool.pool[0].y < 360 && enemyBulPool.pool[0].alive === true){
-      console.log('TRY TRY');
       enemyBulPool.getTwo(enemies.poolEn[help.index].x + 5, enemies.poolEn[help.index].y + 30, enemies.poolEn[help.index].x + 33, enemies.poolEn[help.index].y + 30);
       enemyBulPool.animate('enemyBullet');
-      console.log('TRY BULLETS', enemyBulPool.pool[0])
     }
     for(let i = 0; i < 30; i++)
     {
