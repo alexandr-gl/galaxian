@@ -1,7 +1,7 @@
 $(function () {
   var game = new Game();
   var pool = new Pool(30);
-  var enemyBulPool = new Pool(2);
+  var enemyBulPool = new Pool(4);
   var enemies = new InitEnemies(134, 0);
   var imageStore = new function () {
     this.img = new Image();
@@ -44,6 +44,7 @@ $(function () {
           this.pool[i] = bullet;
         }
       }
+
       else if(type === 'enBullets') {
         for (let i = 0; i < size; i++) {
           var bullet = new Bullet('enBullets');
@@ -51,7 +52,7 @@ $(function () {
         }
       }
     }
-    console.log('CHECK POOL>>>', this.pool)
+
     this.get = function (x, y) {
       if(!this.pool[size - 1].alive) {
         this.pool[size - 1].spawn(x, y);
@@ -71,6 +72,7 @@ $(function () {
           if(this.pool[i].draw(type)) {
             this.pool[i].clear();
             this.pool.push((this.pool.splice(i,1))[0])
+            // console.log('AAAA>>>', this.pool)
           }
         }
         else break;
@@ -138,9 +140,15 @@ $(function () {
       if(alive === true) {
         game.mainCtx.drawImage(imageStore.enemyImg, this.x, this.y)
       }
-      else {
+      else if (alive === false){
         game.mainCtx.clearRect(this.x, this.y, 38, 28)
       }
+      // else {
+      //   game.mainCtx.clearRect(this.x, this.y, 38, 28)
+      //   alert('You win');
+      //   window.location.reload();
+      //   console.log('WINNER')
+      // }
     }
   }
 
@@ -178,6 +186,7 @@ $(function () {
   var randInd;
   var enArr;
   var help;
+  var check;
 
 
   function update () {
@@ -198,15 +207,26 @@ $(function () {
 
   var timer = setInterval( function () {
     update();
-    enArr = enemies.poolEn.filter(function (item) {
-      return item.alive === true && item.y === 76;
+    console.log('JJJJJ>>>', enemies.poolEn)
+    enArr = enemies.poolEn.filter(function (item, index) {
+      if(index > 12) {
+        // console.log('Bottom row');
+        return item.alive === true && item.y === 76}
+      else if(index < 12) {
+        console.log('Top rows');
+        return item.alive === true && enemies.poolEn[index + 6].alive === false;
+      }
     })
     if(enArr.length === 1) {
       help = enArr[0];
     }
     if(enArr.length !== 0) {
       randInd = randomInteger(0, enArr.length - 1);
-      enemyBulPool.getTwo(enemies.poolEn[enArr[randInd].index].x + 5, enemies.poolEn[enArr[randInd].index].y + 30, enemies.poolEn[enArr[randInd].index].x + 33, enemies.poolEn[enArr[randInd].index].y + 30);
+      enemyBulPool.getTwo(
+        enemies.poolEn[enArr[randInd].index].x + 5,
+        enemies.poolEn[enArr[randInd].index].y + 30,
+        enemies.poolEn[enArr[randInd].index].x + 33,
+        enemies.poolEn[enArr[randInd].index].y + 30);
       enemyBulPool.animate('enemyBullet');
     }
     else if(enemyBulPool.pool[0].y < 360 && enemyBulPool.pool[0].alive === true){
@@ -229,7 +249,10 @@ $(function () {
           enemies.poolEn.splice(arr[arr.length - 1].index, 1, arr[arr.length - 1]);
         }
       }
-      if(i < 18 && enemies.poolEn.length !== 0) {
+      check = enemies.poolEn.filter(function (item) {
+        return item.alive === true;
+      })
+      if(i < 18 && enemies.poolEn.length !== 0 && check.length >= 0) {
         enemies.poolEn[i].draw(enemies.poolEn[i].alive);
       }
     }
@@ -249,7 +272,7 @@ $(function () {
     else if(eventObject.which === 32)
     {
       pool.getTwo(ship.x + 5, ship.y - 6, ship.x + 33, ship.y - 6);
-      pool.animate();
+      pool.animate('ship');
     }
   })
 
